@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LexiGPT AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #8b5cf6;
+            --primary-dark: #7c3aed;
+            --secondary: #06d6a0;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --ai-bubble: #f1f5f9;
+            --user-bubble: #8b5cf6;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #334155;
+            overscroll-behavior: none;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .chat-container {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border-radius: 1.5rem;
+            background: rgba(255, 255, 255, 0.95);
+            height: 95vh;
+            max-height: 900px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .logo-icon {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chat-area {
+            flex-grow: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            background-color: rgba(248, 250, 252, 0.5);
+        }
+        
+        .chat-bubble {
+            max-width: 85%;
+            padding: 1rem 1.25rem;
+            border-radius: 1.25rem;
+            margin-bottom: 1rem;
+            position: relative;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInUp 0.3s ease-out forwards;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .user-bubble {
+            background-color: var(--user-bubble);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 0.5rem;
+        }
+        
+        .ai-bubble {
+            background-color: var(--ai-bubble);
+            color: #334155;
+            margin-right: auto;
+            border-bottom-left-radius: 0.5rem;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.5rem;
+            background-color: rgba(241, 245, 249, 0.7);
+            border-top: 1px solid rgba(226, 232, 240, 0.5);
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #8b5cf6;
+            display: inline-block;
+            animation: pulse 1.4s infinite both;
+        }
+        
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+        
+        .input-area {
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-top: 1px solid rgba(226, 232, 240, 0.7);
+            position: relative;
+        }
+        
+        .input-container {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+        
+        .chat-input {
+            flex-grow: 1;
+            padding: 0.875rem 1.25rem;
+            border-radius: 1.5rem;
+            border: 1px solid #e2e8f0;
+            background-color: white;
+            color: #334155;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            resize: none;
+            max-height: 120px;
+            line-height: 1.5;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+        }
+        
+        .chat-input::placeholder {
+            color: #94a3b8;
+        }
+        
+        .send-button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);
+        }
+        
+        .send-button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .send-button:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .action-button {
+            background-color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .action-button:hover {
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        
+        .image-preview {
+            position: relative;
+            max-width: 120px;
+            max-height: 90px;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin: 0.5rem auto;
+            border: 2px dashed #e2e8f0;
+        }
+        
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .remove-image {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        
+        .copy-button {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #64748b;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(226, 232, 240, 0.7);
+        }
+        
+        .ai-bubble:hover .copy-button {
+            opacity: 1;
+        }
+        
+        .copy-button:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--dark);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            opacity: 0;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-10px);
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 400px;
+            overflow: hidden;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            color: #1e293b;
+            background-color: #f8fafc;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+            color: #64748b;
+        }
+        
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            background-color: #f8fafc;
+        }
+        
+        .modal-button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .modal-button.confirm {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+        }
+        
+        .modal-button.confirm:hover {
+            background-color: #dc2626;
+        }
+        
+        .modal-button.cancel {
+            background-color: white;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .modal-button.cancel:hover {
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .loader-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .loader-text {
+            margin-top: 1rem;
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+        
+        .message-image {
+            max-width: 250px;
+            max-height: 250px;
+            border-radius: 0.75rem;
+            margin-top: 0.75rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .ai-name {
+            font-weight: 600;
+            color: #8b5cf6;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.9rem;
+        }
+        
+        .status-light {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #06d6a0;
+            margin-right: 8px;
+            box-shadow: 0 0 10px #06d6a0;
+            animation: pulse 2s infinite;
+        }
+        
+        .powered-by {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+        
+        .welcome-message {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #64748b;
+        }
+        
+        .welcome-icon {
+            font-size: 3rem;
+            color: #8b5cf6;
+            margin-bottom: 1rem;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+            body {
+                padding: 0;
+            }
+            
+            .chat-container {
+                height: 100vh;
+                max-height: none;
+                border-radius: 0;
+            }
+            
+            .chat-bubble {
+                max-width: 90%;
+            }
+            
+            .message-image {
+                max-width: 200px;
+            }
+            
+            .header {
+                padding: 1rem 1.25rem;
+            }
+            
+            .chat-area {
+                padding: 1rem;
+            }
+            
+            .input-area {
+                padding: 0.75rem;
+            }
+        }
+        
+        /* Custom scrollbar */
+        .chat-area::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-area::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        
+        .chat-area::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        
+        .chat-area::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-semibold">LexiGPT</h1>
+                    <div class="text-xs text-purple-100">AI Assistant • Online</div>
+                </div>
+            </div>
+            <button id="clear-chat-button" class="action-button" title="Clear Chat">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+        
+        <div id="chat-output" class="chat-area">
+            <div class="welcome-message">
+                <div class="welcome-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-slate-700 mb-2">Hello! I'm LexiGPT</h2>
+                <p class="text-slate-500">Your intelligent AI assistant. How can I help you today?</p>
+            </div>
+        </div>
+        
+        <div id="typing-indicator" class="typing-indicator hidden">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span>LexiGPT is thinking...</span>
+        </div>
+        
+        <div id="image-preview-area" class="hidden bg-slate-100 border-t border-slate-200 p-2">
+            <div class="image-preview">
+                <img id="image-preview" src="#" alt="Image Preview">
+                <button id="remove-image-button" class="remove-image">×</button>
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <div class="input-container">
+                <label for="image-input" class="action-button" title="Upload Image">
+                    <i class="fas fa-image"></i>
+                    <input type="file" id="image-input" accept="image/*" class="hidden">
+                </label>
+                <textarea id="chat-input" class="chat-input" placeholder="Message LexiGPT..." rows="1"></textarea>
+                <button id="send-button" class="send-button" title="Send Message" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            <div class="powered-by">Powered by Advanced AI</div>
+        </div>
+    </div>
+    
+    <div id="toast-notification" class="toast">Copied to clipboard</div>
+    
+    <div id="clear-chat-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">Clear Conversation?</div>
+            <div class="modal-body">
+                This will permanently delete all messages in this conversation. This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-clear-button" class="modal-button cancel">Cancel</button>
+                <button id="confirm-clear-button" class="modal-button confirm">Clear</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="image-loader-overlay" class="loader-overlay">
+        <div class="typing-dots">
+            <span style="width:10px;height:10px;"></span>
+            <span style="width:10px;height:10px;"></span>
+            <span style="width:10px;height:10px;"></span>
+        </div>
+        <p id="image-loader-text" class="loader-text">Generating image...</p>
+    </div>
+
+    <script>
+        // DOM Elements
+        const chatOutput = document.getElementById('chat-output');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const imageInput = document.getElementById('image-input');
+        const imagePreviewArea = document.getElementById('image-preview-area');
+        const imagePreview = document.getElementById('image-preview');
+        const removeImageButton = document.getElementById('remove-image-button');
+        const clearChatButton = document.getElementById('clear-chat-button');
+        const toastNotification = document.getElementById('toast-notification');
+        const clearChatModal = document.getElementById('clear-chat-modal');
+        const confirmClearButton = document.getElementById('confirm-clear-button');
+        const cancelClearButton = document.getElementById('cancel-clear-button');
+        const imageLoaderOverlay = document.getElementById('image-loader-overlay');
+        const imageLoaderText = document.getElementById('image-loader-text');
+
+        // State variables
+        let selectedImageBase64 = null;
+        let selectedImageFile = null;
+        let currentAIResponseElement = null;
+        let chatHistory = [];
+
+        // Configuration
+        const session_key = 'lexigptChatSession_v1';
+        const apiKey = "davidcyril999";
+        const chatApiEndpoint = "https://apis.davidcyriltech.my.id/ai/chatbot";
+        const imageApiEndpoint = "https://apis.davidcyriltech.my.id/flux";
+        const imageGenerationKeywords = ["generate", "create", "render", "show me", "display", "visualize", "draw", "sketch"];
+        
+        // LexiGPT initial prompt
+        const lexigptInitialPrompt = `You are LexiGPT, a helpful and intelligent AI assistant. You provide clear, accurate, and thoughtful responses. You have a friendly and approachable personality while maintaining professionalism. You can help with a wide range of tasks including answering questions, providing explanations, generating content, and more.`;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+            setupEventListeners();
+            autoResizeTextarea();
+        });
+
+        // Core Functions
+        function initializeApp(isClearing = false) {
+            currentAIResponseElement = null;
+            
+            if (loadChatHistoryFromSession() && !isClearing) {
+                chatInput.focus();
+                updateSendButtonState();
+                return;
+            }
+            
+            // Clear welcome message if we're loading history
+            if (loadChatHistoryFromSession() && !isClearing) {
+                const welcomeMessage = chatOutput.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    welcomeMessage.remove();
+                }
+            }
+            
+            if (!isClearing) {
+                // Don't send initial greeting if we have history
+                if (!loadChatHistoryFromSession()) {
+                    showTypingIndicator();
+                    setTimeout(() => {
+                        sendInitialGreeting();
+                    }, 1000);
+                }
+            }
+        }
+
+        function loadChatHistoryFromSession() {
+            try {
+                const storedHistory = sessionStorage.getItem(session_key);
+                if (storedHistory) {
+                    chatHistory = JSON.parse(storedHistory);
+                    
+                    if (chatHistory.length === 0 || 
+                        (chatHistory[0].role === 'user' && chatHistory[0].parts[0].text !== lexigptInitialPrompt)) {
+                        console.log("Invalid or old session history. Starting new session.");
+                        sessionStorage.removeItem(session_key);
+                        chatHistory = [];
+                        return false;
+                    }
+
+                    renderChatHistory();
+                    return true;
+                }
+            } catch (e) {
+                console.warn("Failed to load chat history:", e);
+                sessionStorage.removeItem(session_key);
+            }
+            return false;
+        }
+
+        function renderChatHistory() {
+            // Remove welcome message
+            const welcomeMessage = chatOutput.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.remove();
+            }
+            
+            chatOutput.innerHTML = '';
+            let historyToDisplay = chatHistory.slice(1); // Skip the initial prompt
+            
+            historyToDisplay.forEach(message => {
+                if (message.role === 'user') {
+                    let userText = "";
+                    let userImageBase64 = null;
+                    
+                    if (message.parts && message.parts.length > 0) {
+                        message.parts.forEach(part => {
+                            if (part.text) userText += part.text + " ";
+                            if (part.inlineData && part.inlineData.data) {
+                                userImageBase64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                            }
+                        });
+                    }
+                    displayUserMessage(userText.trim(), userImageBase64);
+                } else if (message.role === 'model') {
+                    let aiText = "";
+                    if (message.parts && message.parts.length > 0) {
+                        message.parts.forEach(part => {
+                            if (part.text) aiText += part.text + " ";
+                        });
+                    }
+                    const bubble = displayAIMessage({ text: aiText.trim() }, false, false);
+                    if (aiText.trim() !== "" && bubble) {
+                        addCopyButtonToBubble(bubble, aiText.trim());
+                    }
+                }
+            });
+            scrollToBottom();
+        }
+
+        async function sendInitialGreeting() {
+            let accumulatedGreeting = "";
+            let finalBubbleElement = null;
+
+            try {
+                const apiUrl = `${chatApiEndpoint}?query=${encodeURIComponent("Introduce yourself as LexiGPT in a friendly way.")}&apikey=${apiKey}`;
+                
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    let errorText = `System error: ${response.statusText}. Please try again later.`;
+                    
+                    if (response.status === 400) {
+                        errorText = "Authentication error: Invalid API key.";
+                    } else if (response.status === 403) {
+                        errorText = "Authorization error: Access denied.";
+                    }
+                    
+                    finalBubbleElement = displayAIMessage({ text: errorText }, true, true);
+                    accumulatedGreeting = errorText;
+                } else {
+                    const data = await response.json();
+                    
+                    if (data.success && data.result) {
+                        accumulatedGreeting = data.result;
+                        finalBubbleElement = displayAIMessage({ text: accumulatedGreeting }, false, true);
+                    } else {
+                        accumulatedGreeting = "Hello! I'm LexiGPT, your AI assistant. I'm here to help with questions, tasks, or just to chat. What can I do for you today?";
+                        finalBubbleElement = displayAIMessage({ text: accumulatedGreeting }, false, true);
+                    }
+                }
+
+                chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: lexigptInitialPrompt }] });
+                chatHistory.push({ role: "model", parts: [{ text: accumulatedGreeting }] });
+                saveChatHistory();
+                
+                if (finalBubbleElement && accumulatedGreeting.trim() !== "") {
+                    addCopyButtonToBubble(finalBubbleElement, accumulatedGreeting);
+                }
+            } catch (error) {
+                console.error("Initialization error:", error);
+                let errMsg = 'System error: Initialization failed. Please refresh and try again.';
+                
+                const errorBubble = displayAIMessage({ text: errMsg }, true, true);
+                chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: lexigptInitialPrompt }] });
+                chatHistory.push({ role: "model", parts: [{ text: errMsg }] });
+                saveChatHistory();
+                
+                if (errorBubble && errMsg.trim() !== "") {
+                    addCopyButtonToBubble(errorBubble, errMsg);
+                }
+            } finally {
+                hideTypingIndicator();
+                chatInput.focus();
+                updateSendButtonState();
+                currentAIResponseElement = null;
+            }
+        }
+
+        // UI Functions
+        function displayUserMessage(message, imageBase64Data) {
+            if (!message && !imageBase64Data) return;
+            
+            // Remove welcome message on first user message
+            const welcomeMessage = chatOutput.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.remove();
+            }
+            
+            const messageElement = document.createElement('div');
+            messageElement.className = 'flex justify-end mb-3';
+            
+            let imageHTML = '';
+            if (imageBase64Data) {
+                imageHTML = `<img src="${imageBase64Data}" alt="User's image" class="message-image">`;
+            }
+            
+            messageElement.innerHTML = `
+                <div class="chat-bubble user-bubble">
+                    ${message ? `<p class="break-words">${message}</p>` : ''}
+                    ${imageHTML}
+                </div>
+            `;
+            
+            chatOutput.appendChild(messageElement);
+            scrollToBottom();
+        }
+
+        function displayAIMessage(content, isError = false, isStreamStart = false) {
+            let textContent = typeof content === 'string' ? content : (content.text || "");
+            let imageUrl = typeof content === 'string' ? "" : (content.imageUrl || "");
+
+            // Remove welcome message on first AI message
+            const welcomeMessage = chatOutput.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.remove();
+            }
+
+            if (isStreamStart) {
+                const messageElement = document.createElement('div');
+                messageElement.className = 'flex justify-start mb-3';
+                
+                const bubble = document.createElement('div');
+                bubble.className = `chat-bubble ai-bubble ${isError ? 'error' : ''}`;
+                
+                const nameTag = document.createElement('div');
+                nameTag.className = 'ai-name';
+                nameTag.innerHTML = `
+                    <i class="fas fa-robot"></i>
+                    LexiGPT
+                `;
+                bubble.appendChild(nameTag);
+                
+                const textSpan = document.createElement('div');
+                textSpan.className = 'ai-text-content';
+                textSpan.innerHTML = formatTextToHTML(textContent);
+                bubble.appendChild(textSpan);
+                
+                messageElement.appendChild(bubble);
+                chatOutput.appendChild(messageElement);
+                currentAIResponseElement = textSpan;
+                scrollToBottom();
+                return bubble;
+            } else if (currentAIResponseElement && !imageUrl && !isError) {
+                currentAIResponseElement.innerHTML += formatTextToHTML(textContent);
+                scrollToBottom();
+                return currentAIResponseElement.closest('.ai-bubble');
+            } else {
+                const messageElement = document.createElement('div');
+                messageElement.className = 'flex justify-start mb-3';
+                
+                const bubble = document.createElement('div');
+                bubble.className = `chat-bubble ai-bubble ${isError ? 'error' : ''}`;
+                
+                const nameTag = document.createElement('div');
+                nameTag.className = 'ai-name';
+                nameTag.innerHTML = `
+                    <i class="fas fa-robot"></i>
+                    LexiGPT
+                `;
+                bubble.appendChild(nameTag);
+                
+                let imageHTML = '';
+                if (imageUrl) {
+                    imageHTML = `<img src="${imageUrl}" alt="AI generated image" class="message-image">`;
+                }
+                
+                bubble.innerHTML += `
+                    <div class="ai-text-content">${formatTextToHTML(textContent)}</div>
+                    ${imageHTML}
+                `;
+                
+                messageElement.appendChild(bubble);
+                chatOutput.appendChild(messageElement);
+                
+                if (!isStreamStart && !currentAIResponseElement && textContent.trim() !== "") {
+                    addCopyButtonToBubble(bubble, textContent);
+                }
+                
+                scrollToBottom();
+                return bubble;
+            }
+        }
+
+        function formatTextToHTML(text) {
+            return text
+                .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/```([\s\S]*?)```/g, (match, p1) => 
+                    `<pre class="bg-slate-800 text-white p-3 rounded-md my-2 text-sm overflow-x-auto"><code>${p1.trim()}</code></pre>`)
+                .replace(/`([^`]+)`/g, '<code class="bg-slate-200 px-1.5 py-0.5 rounded text-sm">$1</code>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function addCopyButtonToBubble(bubbleElement, textToCopy) {
+            if (!textToCopy || textToCopy.trim() === "" || !bubbleElement) return;
+            
+            const existingCopyButton = bubbleElement.querySelector('.copy-button');
+            if (existingCopyButton) existingCopyButton.remove();
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-button';
+            copyBtn.title = 'Copy text';
+            copyBtn.innerHTML = `<i class="fas fa-copy"></i>`;
+            
+            copyBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                copyToClipboard(textToCopy);
+            });
+            
+            bubbleElement.appendChild(copyBtn);
+        }
+
+        function copyToClipboard(text) {
+            // Create a temporary textarea element
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast("Copied to clipboard");
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                showToast("Failed to copy text");
+            } finally {
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function showToast(message) {
+            toastNotification.textContent = message;
+            toastNotification.classList.add('show');
+            setTimeout(() => toastNotification.classList.remove('show'), 2000);
+        }
+
+        function showTypingIndicator() {
+            typingIndicator.classList.remove('hidden');
+        }
+
+        function hideTypingIndicator() {
+            typingIndicator.classList.add('hidden');
+        }
+
+        function scrollToBottom() {
+            chatOutput.scrollTop = chatOutput.scrollHeight;
+        }
+
+        function updateSendButtonState() {
+            sendButton.disabled = chatInput.value.trim() === '' && !selectedImageBase64;
+        }
+
+        function autoResizeTextarea() {
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+                updateSendButtonState();
+            });
+        }
+
+        function clearImagePreview() {
+            selectedImageBase64 = null;
+            selectedImageFile = null;
+            imageInput.value = '';
+            imagePreview.src = '#';
+            imagePreviewArea.classList.add('hidden');
+            updateSendButtonState();
+        }
+
+        function showClearChatModal() {
+            clearChatModal.classList.add('show');
+        }
+
+        function hideClearChatModal() {
+            clearChatModal.classList.remove('show');
+        }
+
+        function clearChat() {
+            chatOutput.innerHTML = '';
+            chatHistory = [];
+            sessionStorage.removeItem(session_key);
+            initializeApp(true);
+            showToast("Conversation cleared");
+            hideClearChatModal();
+        }
+
+        function saveChatHistory() {
+            try {
+                sessionStorage.setItem(session_key, JSON.stringify(chatHistory));
+            } catch (e) {
+                console.warn("Failed to save chat history:", e);
+            }
+        }
+
+        // Event Handlers
+        async function handleSendMessage() {
+            const messageText = chatInput.value.trim();
+            if (messageText === '' && !selectedImageBase64) return;
+
+            currentAIResponseElement = null;
+            const currentImageBase64 = selectedImageBase64;
+            const currentImageFile = selectedImageFile;
+
+            // Display user message
+            displayUserMessage(messageText, currentImageBase64);
+            
+            // Add to chat history
+            const userParts = [];
+            if (messageText) userParts.push({ text: messageText });
+            if (currentImageBase64 && currentImageFile) {
+                userParts.push({
+                    inlineData: {
+                        mimeType: currentImageFile.type,
+                        data: currentImageBase64.split(',')[1]
+                    }
+                });
+            }
+            
+            chatHistory.push({ role: "user", parts: userParts });
+            saveChatHistory();
+            
+            // Clear input
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
+            clearImagePreview();
+            updateSendButtonState();
+            
+            // Check for image generation request
+            const lowerMessageText = messageText.toLowerCase();
+            let isImageGenRequest = false;
+            let imageGenPrompt = "";
+            
+            for (const keyword of imageGenerationKeywords) {
+                if (lowerMessageText.includes(keyword)) {
+                    isImageGenRequest = true;
+                    let keywordIndex = lowerMessageText.indexOf(keyword);
+                    imageGenPrompt = messageText.substring(keywordIndex + keyword.length).trim();
+                    
+                    if (imageGenPrompt.startsWith(":") || imageGenPrompt.startsWith(",")) {
+                        imageGenPrompt = imageGenPrompt.substring(1).trim();
+                    }
+                    
+                    if (!imageGenPrompt) {
+                        imageGenPrompt = "a beautiful landscape with mountains and a lake";
+                    }
+                    break;
+                }
+            }
+
+            if (isImageGenRequest) {
+                await generateImageWithLexiGPT(imageGenPrompt);
+                chatInput.focus();
+                return;
+            }
+            
+            // Process normal message
+            showTypingIndicator();
+            let accumulatedResponse = "";
+            let finalBubbleForCopyButton = null;
+
+            try {
+                const apiUrl = `${chatApiEndpoint}?query=${encodeURIComponent(messageText)}&apikey=${apiKey}`;
+                
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    let errorText = `System error: ${response.statusText}. Please try again.`;
+                    
+                    if (response.status === 400) {
+                        errorText = "Authentication error: Invalid API key.";
+                    } else if (response.status === 403) {
+                        errorText = "Authorization error: Access denied.";
+                    }
+                    
+                    finalBubbleForCopyButton = displayAIMessage({ text: errorText }, true, true);
+                    accumulatedResponse = errorText;
+                } else {
+                    const data = await response.json();
+                    
+                    if (data.success && data.result) {
+                        accumulatedResponse = data.result;
+                        finalBubbleForCopyButton = displayAIMessage({ text: accumulatedResponse }, false, true);
+                    } else {
+                        accumulatedResponse = "I've processed your request. How else can I assist you?";
+                        finalBubbleForCopyButton = displayAIMessage({ text: accumulatedResponse }, false, true);
+                    }
+                }
+
+                chatHistory.push({ role: "model", parts: [{ text: accumulatedResponse }] });
+                saveChatHistory();
+                
+                if (finalBubbleForCopyButton && accumulatedResponse.trim() !== "") {
+                    addCopyButtonToBubble(finalBubbleForCopyButton, accumulatedResponse);
+                }
+            } catch (error) {
+                console.error("Processing error:", error);
+                let errorMsg = 'System error: Processing failed. Please try again.';
+                
+                const errorBubble = displayAIMessage({ text: errorMsg }, true, true);
+                chatHistory.push({ role: "model", parts: [{ text: errorMsg }] });
+                saveChatHistory();
+                
+                if (errorBubble && errorMsg.trim() !== "") {
+                    addCopyButtonToBubble(errorBubble, errorMsg);
+                }
+            } finally {
+                hideTypingIndicator();
+                chatInput.focus();
+                updateSendButtonState();
+                currentAIResponseElement = null;
+            }
+        }
+
+        async function generateImageWithLexiGPT(promptForImage) {
+            imageLoaderOverlay.classList.add('show');
+            imageLoaderText.textContent = "Generating your image...";
+            
+            let lexigptPreText = "I'm generating an image based on your request. Please wait a moment.";
+            const preTextBubble = displayAIMessage({ text: lexigptPreText }, false, false);
+            if (lexigptPreText.trim() !== "") addCopyButtonToBubble(preTextBubble, lexigptPreText);
+
+            chatHistory.push({ role: "model", parts: [{ text: lexigptPreText }] });
+            saveChatHistory();
+
+            try {
+                const apiUrl = `${imageApiEndpoint}?prompt=${encodeURIComponent(promptForImage)}&apikey=${apiKey}`;
+                
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    let errorText = `Image generation error: ${response.statusText || "Service unavailable"}`;
+                    
+                    const errorBubble = displayAIMessage({ text: errorText }, true, false);
+                    if (errorText.trim() !== "") addCopyButtonToBubble(errorBubble, errorText);
+                    
+                    chatHistory.push({ role: "model", parts: [{ text: errorText }] });
+                    saveChatHistory();
+                    return;
+                }
+
+                // Since the API returns the image directly, we need to handle it as a blob
+                const imageBlob = await response.blob();
+                const imageUrl = URL.createObjectURL(imageBlob);
+                
+                let lexigptPostText = "Here's the image I generated based on your request:";
+                const imgBubble = displayAIMessage({ text: lexigptPostText, imageUrl: imageUrl }, false, false);
+                
+                if (lexigptPostText.trim() !== "") addCopyButtonToBubble(imgBubble, lexigptPostText);
+                
+                chatHistory.push({
+                    role: "model",
+                    parts: [
+                        { text: lexigptPostText },
+                        { text: "[Image generated by LexiGPT]" }
+                    ]
+                });
+                saveChatHistory();
+                
+            } catch (error) {
+                console.error("Image generation error:", error);
+                let errorText = "Error generating image. Please try again.";
+                
+                const catchBubble = displayAIMessage({ text: errorText }, true, false);
+                if (errorText.trim() !== "") addCopyButtonToBubble(catchBubble, errorText);
+                
+                chatHistory.push({ role: "model", parts: [{ text: errorText }] });
+                saveChatHistory();
+            } finally {
+                imageLoaderOverlay.classList.remove('show');
+            }
+        }
+
+        function setupEventListeners() {
+            // Send message on button click or Enter key
+            sendButton.addEventListener('click', handleSendMessage);
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey && !sendButton.disabled) {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            });
+
+            // Image upload handling
+            imageInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                if (file.size > 4 * 1024 * 1024) {
+                    displayAIMessage({ text: "Error: Image exceeds maximum size limit of 4MB." }, true, false);
+                    clearImagePreview();
+                    return;
+                }
+
+                selectedImageFile = file;
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    selectedImageBase64 = e.target.result;
+                    imagePreview.src = selectedImageBase64;
+                    imagePreviewArea.classList.remove('hidden');
+                    updateSendButtonState();
+                };
+                
+                reader.readAsDataURL(file);
+            });
+
+            removeImageButton.addEventListener('click', clearImagePreview);
+            
+            // Clear chat functionality
+            clearChatButton.addEventListener('click', showClearChatModal);
+            confirmClearButton.addEventListener('click', clearChat);
+            cancelClearButton.addEventListener('click', hideClearChatModal);
+            clearChatModal.addEventListener('click', (e) => {
+                if (e.target === clearChatModal) hideClearChatModal();
+            });
+            
+            // Update send button state when input changes
+            chatInput.addEventListener('input', updateSendButtonState);
+        }
+    </script>
+</body>
+</html>
